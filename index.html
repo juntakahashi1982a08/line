@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="css/sample.css">
+    <title>Chatアプリ</title>
+</head>
+
+<body>
+
+    <!-- コンテンツ表示画面 -->
+
+    <div>
+        <div>
+            名前: <input type="text" id="uname">
+        </div>
+        <div id="date">
+            <!-- 日時の表示を追加 -->
+        </div>
+        <div>
+            <textarea name="" id="text" cols="40" rows="10"></textarea>
+            <button id="send"><img src="mail.jpeg" hight="20px" width="20px"></button>
+            <!-- 紙飛行機アイコンのボタン化 -->
+        </div>
+        <div id="output"></div>
+    </div>
+
+    <!--/ コンテンツ表示画面 -->
+
+    <!-- JQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <!-- JQuery -->
+
+    <!--** 以下Firebase **-->
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+        import { getDatabase, ref, push, set, onChildAdded, update, remove, onChildChanged, onChildRemoved }
+            from "https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-database.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: 
+            // API KEY(takahasi koyuu)はGITHUBでははずす
+            authDomain: "fir-demo-4bf76.firebaseapp.com",
+            projectId: "fir-demo-4bf76",
+            storageBucket: "fir-demo-4bf76.appspot.com",
+            messagingSenderId: "337361159153",
+            appId: "1:337361159153:web:0dc22d2cd962dc81f43a50"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+
+        // database no sanshou
+        const db = getDatabase(app);
+        const dbRef = ref(db, "chat");
+
+        const now = new Date;
+        $("#date").html(now.getFullYear() + "年" + (now.getMonth() + 1) + "月" + now.getDate() + "日" + now.getHours()
+            + "時" + now.getMinutes() + "分" + now.getSeconds() + "秒");
+
+        const season = now.getMonth();
+        if (season == 0) {
+            $('body').css('background-image', 'url(1月.jpeg)');
+        } else if (season == 1) {
+            $('body').css('background-image', 'url(2月.jpg)');
+        } else if (season == 2) {
+            $('body').css('background-image', 'url(3月.jpg)');
+        } else if (season == 3) {
+            $('body').css('background-image', 'url(4月.jpeg)');
+        } else if (season == 4) {
+            $('body').css('background-image', 'url(5月.jpeg)');
+        } else if (season == 5) {
+            $('body').css('background-image', 'url(6月.jpeg)');
+        } else if (season == 6) {
+            $('body').css('background-image', 'url(7月.png)');
+        } else if (season == 7) {
+            $('body').css('background-image', 'url(8月.jpeg)');
+        } else if (season == 8) {
+            $('body').css('background-image', 'url(9月.jpeg)');
+        } else if (season == 9) {
+            $('body').css('background-image', 'url(10月.jpeg)');
+        } else if (season == 10) {
+            $('body').css('background-image', 'url(11月.jpeg)');
+        } else if (season == 11) {
+            $('body').css('background-image', 'url(12月.jpeg)');
+        };
+
+        $("#send").on("click", function () {
+            const msg = {
+                uname: $("#uname").val(),
+                date: $("#date").text(),
+                text: $("#text").val()
+            };
+            const newPostRef = push(dbRef);
+            set(newPostRef, msg);
+        });
+
+        // onChildAdded(dbRef, function (data) {
+        // const msg = data.val();
+        // const key = data.key;
+        // let h = "<p>";
+        // h += msg.uname;
+        // h += "<br>";
+        // h += msg.text;
+        // h += "</p>";
+        // $("#output").append(h); // #output の最後に追加
+
+        onChildAdded(dbRef, function (data) {
+            const msg = data.val();
+            console.log(msg);
+            const key = data.key;
+            let h = '<p id="' + key + '">';
+            h += msg.uname;
+            h += '<img src="kao.png" height="17px" width="20px">';
+            h += '＜';
+            h += '<span contentEditable="true" id="' + key + '_update">' + msg.text + '</span>';
+            h += '<span class="remove" data-key="' + key + '"><button><img src="gomi.png" height="14px" width="14px"></button></span>';
+            h += '<span class="update" data-key="' + key + '"><button><img src="pen.jpeg" height="14px" width="14px"></button></span>';
+            h += '<br>';
+            h += msg.date;
+            // dateを追加
+            h += '</p>';
+            $("#output").append(h); // #output の最後に追加
+        });
+
+        $("#output").on("click", ".remove", function () {
+            const key = $(this).attr("data-key");
+            const remove_item = ref(db, "chat/" + key);
+            remove(remove_item);
+        });
+
+        onChildRemoved(dbRef, (data) => {
+            $("#" + data.key).remove();
+        });
+
+        // onChildRemoved(ref(db, "chat"), function () {
+        //     $("#" + data.key).remove();
+        // });
+
+        // console.log都度で、firebaseなのかhtmlなのか、どれが効いてないのか調べる
+        
+        // 削除はできたが更新は最初からエラー・・・
+
+        // $("#output").on("click", ".update", function () {
+        //     const key = $(this).attr("data-key");
+        //     // ここまではOK
+        //     update(ref(db, "chat/" + key), {
+        //         text: $('#' + key + '_update').html();
+        //     });
+        // });
+
+        // onChildChanged(dbRef, (data) => {
+        //     $("#"+data.key+'_update').html(data.val().text);
+        //     $("#"+data.key+'_update').fadeOut(600).fadeIn(600);
+        // });
+
+        // const target = document.getElementById("#output");
+        // target.scrollIntoView(false);
+        // 効果出てない。
+
+    </script>
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+
+</html>
